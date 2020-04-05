@@ -1,3 +1,39 @@
+# TODO
+
+Je propose que les implementations des algos soient ecrits dans des scripts a part, qu'on importera dans le notebook. Ensuite, est-ce qu'on etudie toutes les methodes dans un seul notebook ? (a voir, pour l'instant j'ai nomme le notebook de la random forest "MT - Random Forest" MT pour model training, mais si on decide de tout faire sur le meme, on le renommera).
+
+## Elise
+* Ajouter docstring dans le module `randomforest`
+* `MT - Random Forest`
+    * Trouver les bons parametres (Comment fonctionne [GridSearchCV](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) ? et autre)
+    * Ajout de commentaires
+
+
+## Telio
+
+# Le projet - Music genre classification
+
+
+* https://github.com/librosa/librosa (Pour trouver les features d’une nouvelle musique (MIR – Music Information Retrieval) i.e. récupérer l’empreinte d’une musique)
+* https://towardsdatascience.com/music-genre-classification-with-python-c714d032f0d8
+* [Lien vers son github](https://github.com/parulnith/Music-Genre-Classification-with-Python)
+
+
+
+## Proposition structure du projet
+1.	Data Input
+2.	Exploratory Data Analysis 
+3.	Feature Engineering (MIR) 
+4.	Dividing the data into training and test set
+5.	Classification with several methods (Random Forest, Linear Regression, Naive Bayes, Logistic Regression, SVM?)
+6.	Training time? and accuracy with test set (on pourra faire un ptit tableau comparatif)
+7.	Test with own dataset?
+8.	Music recommendation? (with own dataset?)
+
+Exemple de projet super bien construit !
+* https://github.com/miguelfzafra/Latest-News-Classifier/tree/master/0.%20Latest%20News%20Classifier
+
+
 # Idées pour le projet
 
 ## Techniques qui me paraissent accessibles pour nous :
@@ -46,26 +82,4 @@ Des tutoriels qui me semble accessibles “mainly from scratch” et avec “pan
 * https://jeppbautista.wordpress.com/2019/01/26/theory-to-application-linear-regression-from-scratch-using-python/ (linear regression)
 * https://jeppbautista.wordpress.com/2019/02/02/theory-to-application-naive-bayes-classifier-for-sentiment-analysis-using-python/ (naive Bayes classifier for sentiment analysis)
 
----------------------------------------------------
-# Le projet - Music genre classification
-
-
-* https://github.com/librosa/librosa (Pour trouver les features d’une nouvelle musique (MIR – Music Information Retrieval) i.e. récupérer l’empreinte d’une musique)
-* https://towardsdatascience.com/music-genre-classification-with-python-c714d032f0d8
-* [Lien vers son github](https://github.com/parulnith/Music-Genre-Classification-with-Python)
-
-
-
-## Proposition structure du projet
-1.	Data Input
-2.	Exploratory Data Analysis 
-3.	Feature Engineering (MIR) 
-4.	Dividing the data into training and test set
-5.	Classification with several methods (Random Forest, Linear Regression, Naive Bayes, Logistic Regression, SVM?)
-6.	Training time? and accuracy with test set (on pourra faire un ptit tableau comparatif)
-7.	Test with own dataset?
-8.	Music recommendation? (with own dataset?)
-
-Exemple de projet super bien construit !
-* https://github.com/miguelfzafra/Latest-News-Classifier/tree/master/0.%20Latest%20News%20Classifier
 
