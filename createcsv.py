@@ -9,7 +9,7 @@ files = os.listdir(script_directory)#on liste les fichiers dans le repertoire
 csv_header = 'filename chroma_stft rms spectral_centroid spectral_bandwidth rolloff zero_crossing_rate'
 for i in range(1, 21):
     csv_header += ' mfcc' + str(i)
-csv_header += ' estimated_tempo genre/label'
+csv_header += ' spectral_contrast spectral_flatness tonnetz estimated_tempo genre/label'
 
 with open('data.csv', 'w', newline='') as new_file:
     writer = csv.writer(new_file)
@@ -41,9 +41,13 @@ for file in files:
                 for value in  mfcc:
                     to_append += ' ' + str(np.mean(value))
                     
+                spectral_contrast = librosa.feature.spectral_contrast(y=y)
+                spectral_flatness = librosa.feature.spectral_flatness(y=y)
+                tonnetz = librosa.feature.tonnetz(y=y)
+                
                 tempo = librosa.beat.tempo(y=y)
                 
-                to_append += ' ' + str(tempo)[1:-1] + ' ' + genre
+                to_append += ' ' + str(np.mean(spectral_contrast)) + ' ' + str(np.mean(spectral_flatness)) + ' ' + str(np.mean(tonnetz)) + ' ' + str(tempo)[1:-1] + ' ' + genre
                 
                 with open('data.csv', 'a', newline='') as writing_new_file:
                     writer = csv.writer(writing_new_file)
