@@ -3,22 +3,24 @@
 Je propose que les implementations des algos soient ecrits dans des scripts a part, qu'on importera dans le notebook. Ensuite, est-ce qu'on etudie toutes les methodes dans un seul notebook ? (a voir, pour l'instant j'ai nomme le notebook de la random forest "MT - Random Forest" MT pour model training, mais si on decide de tout faire sur le meme, on le renommera).
 
 ## Elise
-* Ajouter docstring dans le module `randomforest`
 * `MT - Random Forest`
     * Trouver les bons parametres (Comment fonctionne [GridSearchCV](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) ? et autre)
+    * Est-ce que l'ajout de features a influence le resultat ?
     * Ajout de commentaires
-
+* Possible de traiter des features qui sont des chaines de carac et non des int ?
 
 ## Telio
 
 # Le projet - Music genre classification
 
-
 * https://github.com/librosa/librosa (Pour trouver les features d’une nouvelle musique (MIR – Music Information Retrieval) i.e. récupérer l’empreinte d’une musique)
 * https://towardsdatascience.com/music-genre-classification-with-python-c714d032f0d8
 * [Lien vers son github](https://github.com/parulnith/Music-Genre-Classification-with-Python)
 
+## Liens pour optimisation des hyper parametres
 
+* https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74
+* https://stackoverflow.com/questions/19335165/what-is-the-difference-between-cross-validation-and-grid-search
 
 ## Proposition structure du projet
 1.	Data Input
