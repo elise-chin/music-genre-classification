@@ -2,6 +2,15 @@
 
 Je propose que les implementations des algos soient ecrits dans des scripts a part, qu'on importera dans le notebook. Ensuite, est-ce qu'on etudie toutes les methodes dans un seul notebook ? (a voir, pour l'instant j'ai nomme le notebook de la random forest "MT - Random Forest" MT pour model training, mais si on decide de tout faire sur le meme, on le renommera).
 
+## Groupe
+
+1. Naive Bayes Classifier (Linear Classifier)
+2. k-NN
+3. SVM
+
+Ce sont les algos qui me paraissent les plus intéressants pour notre problème ainsi que accesibles, le SVM est sûrement plus dur à coder
+Voire https://en.wikipedia.org/wiki/Statistical_classification
+
 ## Elise
 * `MT - Random Forest`
     * Trouver les bons parametres (Comment fonctionne [GridSearchCV](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) ? et autre)
@@ -10,6 +19,7 @@ Je propose que les implementations des algos soient ecrits dans des scripts a pa
 * Possible de traiter des features qui sont des chaines de carac et non des int ?
 
 ## Telio
+* Coder le Naive Bayes Classifier
 
 # Le projet - Music genre classification
 
@@ -24,8 +34,8 @@ Je propose que les implementations des algos soient ecrits dans des scripts a pa
 
 ## Proposition structure du projet
 1.	Data Input
-2.	Exploratory Data Analysis 
-3.	Feature Engineering (MIR) 
+2.	Exploratory Data Analysis
+3.	Feature Engineering (MIR)
 4.	Dividing the data into training and test set
 5.	Classification with several methods (Random Forest, Linear Regression, Naive Bayes, Logistic Regression, SVM?)
 6.	Training time? and accuracy with test set (on pourra faire un ptit tableau comparatif)
@@ -51,7 +61,7 @@ On peut faire de la classification, du clustering et même des recommandations e
 
 ### Million Song Dataset (MSDS)
 Audio features from 1M different songs. _Text_
-* http://millionsongdataset.com/ 
+* http://millionsongdataset.com/
     * Enormement d'infos autour de l'artiste, la musique (ses caractéristiques audio)
     * Features deja extraits (energy, loudness, mode, beats confidence, tempo, time signature, ...)
     * Possibilite de telecharger une partie du jeu de donnees (10k chansons, 1.8 Go)
@@ -59,7 +69,7 @@ Audio features from 1M different songs. _Text_
     * Système de recommandation. Trouver correlation entre un user et ses chansons prefs, et correlation entre les chansons
 
 ### Free Music Archive (FMA) Music Analysis Dataset
-100k songs (343 days, 1TiB) with a hierarchy of 161 genres, metadata, user data, free-form text _(Text, MP3)_. **Classification, recommandation** 
+100k songs (343 days, 1TiB) with a hierarchy of 161 genres, metadata, user data, free-form text _(Text, MP3)_. **Classification, recommandation**
 * https://github.com/mdeff/fma
 * https://archive.ics.uci.edu/ml/datasets/FMA:+A+Dataset+For+Music+Analysis
 * https://arxiv.org/pdf/1612.01840.pdf (research paper)
@@ -68,7 +78,7 @@ Audio features from 1M different songs. _Text_
 
 
 ### Geographical Original of Music Data Set (Musique du monde)
-Audio features of music samples from different locations _(Text)_. **Geographical classification, clustering** 
+Audio features of music samples from different locations _(Text)_. **Geographical classification, clustering**
 * https://archive.ics.uci.edu/ml/datasets/Geographical+Original+of+Music
     * Features deja extraits avec marsyas
 * https://sci-hub.zone/10.1109/ICDM.2014.73 (research paper)
@@ -83,5 +93,3 @@ Des tutoriels qui me semble accessibles “mainly from scratch” et avec “pan
 * https://jeppbautista.wordpress.com/2019/01/27/theory-to-application-logistic-regression-from-scratch-using-python/ (logistic regression)
 * https://jeppbautista.wordpress.com/2019/01/26/theory-to-application-linear-regression-from-scratch-using-python/ (linear regression)
 * https://jeppbautista.wordpress.com/2019/02/02/theory-to-application-naive-bayes-classifier-for-sentiment-analysis-using-python/ (naive Bayes classifier for sentiment analysis)
-
-
