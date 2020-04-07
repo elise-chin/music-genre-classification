@@ -1,7 +1,7 @@
 # TODO
 
 Je propose que les implementations des algos soient ecrits dans des scripts a part, qu'on importera dans le notebook. Ensuite, est-ce qu'on etudie toutes les methodes dans un seul notebook ? (a voir, pour l'instant j'ai nomme le notebook de la random forest "MT - Random Forest" MT pour model training, mais si on decide de tout faire sur le meme, on le renommera).
-
+_______
 ## Groupe
 
 1. Naive Bayes Classifier (Linear Classifier)
@@ -10,14 +10,22 @@ Je propose que les implementations des algos soient ecrits dans des scripts a pa
 
 Ce sont les algos qui me paraissent les plus intéressants pour notre problème ainsi que accesibles, le SVM est sûrement plus dur à coder
 Voire https://en.wikipedia.org/wiki/Statistical_classification
-
+_________
 ## Elise
 * `MT - Random Forest`
     * Trouver les bons parametres (Comment fonctionne [GridSearchCV](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html) ? et autre)
     * Est-ce que l'ajout de features a influence le resultat ?
     * Ajout de commentaires
+* `randomforest.py`
+    * dans predict, X en 2D array
 * Possible de traiter des features qui sont des chaines de carac et non des int ?
 
+Ce que j'ai fait pour le moment :
+
+07/04 
+* Transformé randomForest et decisionTree en `estimator` et revu le type des parametres des fonctions fit et predict
+* 1ere etape Random Search CV avec une belle erreur ...
+_________
 ## Telio
 * Coder le Naive Bayes Classifier
 
@@ -27,10 +35,32 @@ Voire https://en.wikipedia.org/wiki/Statistical_classification
 * https://towardsdatascience.com/music-genre-classification-with-python-c714d032f0d8
 * [Lien vers son github](https://github.com/parulnith/Music-Genre-Classification-with-Python)
 
-## Liens pour optimisation des hyper parametres
+## Optimisation des hyperparametres
+Au lieu de definir au hasard les hyperparametres, on cherche a trouver la meilleure combinaison d'hyperparametres pour obtenir le meilleur modele, cad celui qui a la meilleure precision/prediction.
+Tester une combinaison = entrainer le modele avec cette combinaison
 
-* https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74
+En 2 etapes :
+1. Random Search Cross Validation (`RandomizedSearchCV`) : tester un large choix de combinaisons qui ont été formées en tirant aléatoirement des valeurs dans une grille d'hyperparametres.
+Permet de réduire l'intervalle de recherche pour chaque hyperparamètre.
+2. Grid Search Cross Validation (`GridSearchCV`) : à ce stade, on a une idee plus precise sur quels intervalles chercher. On essaye cette fois-ci toutes les combinaisons possibles.
+L'objectif étant ensuite de sélectionner celui qui a obtenu la meilleure performance.
+
+Liens : 
+* https://towardsdatascience.com/hyperparameter-tuning-the-random-forest-in-python-using-scikit-learn-28d2aa77dd74 (a lire absolument + notion de k-fold cv)
 * https://stackoverflow.com/questions/19335165/what-is-the-difference-between-cross-validation-and-grid-search
+
+Mais avant d'optimiser quoi que ce soit, il faut bien evidemment construire le modele et pas n'importe comment ! On doit créer un objet `estimator`. Pourquoi ? Pcq c'est le type de l'objet que prend `RandomizedSearchCV` et `GridSearchCV` en arguments (en plus d'autres tels que la grille d'hyperparametres, le k du k-fold cv etc.)
+
+Super lien qui explique comment le creer http://danielhnyk.cz/creating-your-own-estimator-scikit-learn/ ou celui de sklearn https://scikit-learn.org/stable/developers/develop.html.
+
+En résumé, c'est une classe qui hérite de `BaseEstimator` et `ClassifierMixin` (tous deux dans `sklearn.base`) avec :
+* sa fonction `__init__(self, et tous les hyperparametres avec une valeur par defaut)`. Attention ici à écrire `self.param1 = param1` et non `self.param = autreParam`
+* `fit(self, X, y)` c'est la methode qui permet d'entrainer le modele (c'etait notre decisionTree et randomForest). Ici X {numpy array} les donnees d'entrainement non labellisees et y {numpy array} les labels. En pratique on appelera la methode de cette maniere `nomModele.fit(data_train, label_train)`
+* `predict(self, X, y=None)` = classify. X ici c'est aussi un {numpy array} et c'est censé renvoyer l'ensemble des predictions pour cet array de donnees. Pour l'instant j'ai reduit X a un seul vecteur et je vais l'etendre a un 2D array.
+* `score(self, params propre au modele pour calculer le score)`
+
+
+
 
 ## Proposition structure du projet
 1.	Data Input
