@@ -1,3 +1,11 @@
+"""
+Ce module contient :
+    - la classe `Node` pour representer un noeud d'un arbre de decision
+    - la classe `OurDecisionTreeClassifier` 
+    - la classe `OurRandomForestClassifier`
+    - d'autres methodes tels que gini, infoGain...
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,8 +13,10 @@ import random as rd
 from math import sqrt
 from collections import defaultdict
 
+from sklearn.base import BaseEstimator, ClassifierMixin
+
 #######################
-#    Decision Tree
+#        Node
 #######################
 
 class Node:
@@ -72,6 +82,183 @@ class Node:
             m = max_left if max_left >= max_right else max_right
             return m + 1
 
+
+###################################################
+#           OurDecisionTreeClassifier
+###################################################
+
+class OurDecisionTreeClassifier(BaseEstimator, ClassifierMixin):
+    """A decision tree classifier.
+    
+    Arguments:
+        n_cuts {int} -- the number of cuts tested to find the best cut
+        max_depth {int} -- the maximal depth of a decision tree
+
+    Attributes:
+        tree_ {Node} -- the root of the decision tree
+        n_samples_ {int} --
+        n_features_ {int} -- the number of features when `fit` is performed
+        features_ {list} -- the list of features (je sais pas encore si c nessaire)
+    """
+    def __init__(self, n_cuts = 10, max_depth = 10):
+        self.n_cuts = n_cuts
+        self.max_depth = max_depth
+
+    def fit(self, X, y, features):
+        """Build a decision tree classifier from the training set X.
+        
+        Arguments:
+            X {numpy_ndarray} -- The training input samples without labels
+            y {numpy_ndarray} -- The classes labels
+            features {list} -- The list of features
+
+        Returns:
+            OurDecisionTreeClassifier -- self, the fitted estimator
+        """
+        def _build(node, features, depth_max):
+            gain, c1, c2, question = bestCut(node, self.n_cuts, features)
+        
+            # There is no further information gain.
+            if(gini(node.data) == 0 or gain == 0 or node.depth() == depth_max):
+                return node # Leaf
+            
+            # The best cut has been found. We can then partition the dataset.
+            partition(node, c1, c2, question)
+            
+            # Recursively builds the tree.
+            _build(node.left_son, features, depth_max-1)
+            _build(node.right_son, features, depth_max-1)
+
+        self.n_samples_ = X.shape[0]
+        self.n_features_ = len(features)
+        self.features_ = features
+        
+        # Associate each data point in X to its label in y 
+        X_dict = defaultdict(list)
+        for k in range(X.shape[0]):
+            X_dict[y[k]].append(X[k])
+
+        # Build the tree
+        root = Node(X_dict)
+        _build(node=root, features=features, depth_max=self.max_depth)
+        self.tree_ = root
+
+        return self
+
+    def predict(self, X):
+        """Predict class for X.
+    
+        Arguments:
+            X {numpy-ndarray} -- the input to classify
+        
+        Returns:
+            int -- the predicted class
+        """
+        exists_son = True
+        while(self.tree_ != None and self.tree_.question != None and exists_son):
+            if(X[self.tree_.question[0]] <= self.tree_.question[1]):
+                self.tree_ = self.tree_.left_son
+            else:
+                self.tree_ = self.tree_.right_son
+            if(self.tree_.left_son == None and self.tree_.right_son == None):
+                exists_son = False
+        majoritary_index = np.argmax([len(points) for points in list(self.tree_.data.values())])
+        key = list(self.tree_.data.keys())[majoritary_index]
+        return int(key)
+
+#####################
+#   Random Forest 
+#####################
+
+class OurRandomForestClassifier(BaseEstimator, ClassifierMixin):
+    """A random forest classifier.
+    
+    Arguments:
+        nb_trees --
+    
+    Attributes:
+        base_estimator_ {OurDecisionTreeClassifier} -- The class used to create the list of trees.
+        trees_ {list of OurDecisionTreeClassifier} -- The collection of fitted sub-estimators.
+        classes_ {set} -- The classes labels.
+        n_classes_ {int} -- The number of classes.
+        n_features_ {int} -- The number of features when `fit` is performed.
+        score_ {float} -- Score of the training dataset (using out-of-bag estimate ??)
+    """
+
+    def __init__(self, n_trees = 100, n_samples = 100, n_cuts = 10, max_depth = 15):
+        self.n_trees = n_trees
+        self.n_samples = n_samples
+        self.n_cuts = n_cuts
+        self.max_depth = max_depth
+        self.base_estimator_ = OurDecisionTreeClassifier(n_cuts, max_depth)
+
+    def fit(self, X, y):
+        """Build a forest of trees from the training set (X, y).
+        
+        Arguments:
+            X {numpy_ndarray} -- The training input samples without labels
+            y {numpy_ndarray} -- The classes labels
+        
+        Returns:
+            OurRandomForestClassifier -- self
+        """
+        self.classes_ = set(y)
+        self.n_classes_ = len(self.classes_)
+        self.trees_ = []
+        for _ in range(self.n_trees):
+        
+            # Random sampling of size n_samples in data
+            samples = rd.sample(list(X), self.n_samples)
+
+            # Retrieve the labels associated with the data point in samples
+            samples_label = [y[k] for k in range(self.n_samples) if (samples[k].all() == X[k].all())]
+
+            # Random sampling of the features that will be used to build the tree 
+            self.n_features_ = X.shape[1]
+            tFeatures = rd.sample([i for i in range(self.n_features_)], int(sqrt(self.n_features_)) + 1)
+
+            # Build each tree
+            tree = self.base_estimator_.fit(X=np.array(samples), y=np.array(samples_label), features=tFeatures)
+            self.trees_.append(tree)
+
+        return self
+
+    def predict(self, element):
+        """[summary]
+        
+        Arguments:
+            element {numpy-ndarray} -- [description]
+        """
+        
+        occ = [0] * (self.n_classes_ + 1)
+        for tree in self.trees_:
+            key = tree.predict(element)
+            occ[key] += 1
+        closest = np.argmax(occ)
+        
+        return closest
+
+    def score(self, guessed_labels, true_labels):
+        """Computes the accuracy of the random forest.
+        
+        Arguments:
+            guessed_labels {list} -- the list of labels guessed by the random forest
+            true_labels {list} -- the list of the real labels
+        
+        Returns:
+            float -- the accuracy
+        """
+        score = 0
+        n = len(guessed_labels)
+        for i in range(n):
+            score += (int(guessed_labels[i]) == int(true_labels[i]))
+        score = score/n
+        return score
+
+##################
+# Methodes utiles
+##################
+
 def gini(data):
     """Gini Impurity for a set of data saved in a dictionary.
     The Gini Impurity is a measure of how often a randomly chosen element from the set would be incorrectly labeled if it was randomly labeled according to the distribution of labels in the subset.
@@ -86,18 +273,6 @@ def gini(data):
     probs = [prob/sum(probs) for prob in probs] 
     return 1 - sum([i ** 2 for i in probs])
 
-def lenDictValues(dic):
-    """Computes the total number of data in a dataset represented by a dictionary. Each value is a list.
-    
-    Arguments:
-        dic {dict} -- the dataset
-    
-    Returns:
-        int -- the number of data
-    """
-    s = [len(l) for l in dic.values()]
-    return sum(s)
-    
 def infoGain(c, c1, c2):
     """Computes the information gain from a cut. It is used to decide which feature to split on at each step in building the decision tree.
     
@@ -193,60 +368,19 @@ def partition(node, c1, c2, question):
     node.right_son = Node(c2)
     node.right_son.father = node
 
-def decisionTree(node, nb_cut_to_find_best, features, max_depth=5):
-    """Builds the decision tree.
+# Sur les dictionnaires
+def lenDictValues(dic):
+    """Computes the total number of data in a dataset represented by a dictionary. Each value is a list.
     
     Arguments:
-        node {Node} -- the root node
-        nb_cut_to_find_best {int} -- the number of cuts tested to find the best cut
-        features {list} -- the list of features
-    
-    Keyword Arguments:
-        max_depth {int} -- the maximal depth of a decision tree (default: {5})
+        dic {dict} -- the dataset
     
     Returns:
-        Node -- the root of the decision tree
+        int -- the number of data
     """
-    gain, c1, c2, question = bestCut(node, nb_cut_to_find_best, features)
-    
-    # There is no further information gain.
-    if(gini(node.data) == 0 or gain == 0 or node.depth() == max_depth):
-        return node # Leaf
-    
-    # The best cut has been found. We can then partition the dataset.
-    partition(node, c1, c2, question)
-    
-    # Recursively builds the tree.
-    decisionTree(node.left_son, nb_cut_to_find_best, features, max_depth-1)
-    decisionTree(node.right_son, nb_cut_to_find_best, features, max_depth-1)
-    return node # Decision node
+    s = [len(l) for l in dic.values()]
+    return sum(s)
 
-def classify(root, element):
-    """Categorize the input element with the help of the tree root and returns the label guessed by the decision tree.
-    
-    Arguments:
-        root {Node} -- the root node of the decision tree
-        element {array} -- the input to classify
-    
-    Returns:
-        int -- the label guessed
-    """
-    node = root
-    exists_son = True
-    while(node != None and node.question != None and exists_son):
-        if(element[node.question[0]] <= node.question[1]):
-            node = node.left_son
-        else:
-            node = node.right_son
-        if(node.left_son == None and node.right_son == None):
-            exists_son = False
-    majoritary_index = np.argmax([len(points) for points in list(node.data.values())])
-    key = list(node.data.keys())[majoritary_index]
-    return int(key)
-
-#####################
-#   Random Forest 
-#####################
 
 def sampleDict(dic, sample_size):
     """Returns a new dataset of size sample_size with points pick uniformly
@@ -268,74 +402,3 @@ def sampleDict(dic, sample_size):
             else:
                 i -= len(v)
     return d
-
-def randomForest(data, nb_trees, sample_size, nb_cut_to_find_best, max_depth = 5, verbose = False):
-    """Builds a random forest.
-    
-    Arguments:
-        data {dict} -- dictionary composed of the labels and the lists of points of such labels
-        nb_trees {int} -- number of trees in the forest
-        sample_size {int} -- number of sample points for each tree
-        nb_cut_to_find_best {int} -- the number of cuts tested to find the best cut
-    
-    Keyword Arguments:
-        max_depth {int} -- the maximal depth of each tree (default: {5})
-        verbose {bool} -- if we want to print or not the process (default: {False})
-    
-    Returns:
-        list of node -- the list of trees
-    """
-    list_trees = []
-    for i in range(1, nb_trees + 1):
-        
-        # Random sampling of size sample_size in data
-        d = sampleDict(data, sample_size)
-        root = Node(d)
-        
-        # Random sampling of the features that will be used to build the tree 
-        nb_features = len(list(data.values())[0][0])
-        tFeatures = rd.sample([i for i in range(0,nb_features)], int(sqrt(nb_features)) + 1)
-        decisionTree(root, nb_cut_to_find_best, tFeatures, max_depth)
-        list_trees.append(root)
-        
-        if verbose == True:
-            print('tFeatures : ', tFeatures)
-            print("Tree", i)
-            root.displayTree(0)
-        
-    return list_trees    
-
-def forestClassify(list_trees, element, nb_labels):
-    """Classify the point element with the random forest.
-    
-    Arguments:
-        list_trees {list of Node} -- the list of trees of the random forest
-        element {array} -- the input to classify
-        nb_labels {int} -- the number of labels of the initial dataset
-
-    Returns:
-        int -- the label of the point according to the forest
-    """
-    occ = [0] * (nb_labels + 1)
-    for tree in list_trees:
-        key = classify(tree, element)
-        occ[key] += 1
-    return np.argmax(occ)
-
-
-def score(guessed_labels, true_labels):
-    """Computes the accuracy of the random forest.
-    
-    Arguments:
-        guessed_labels {list} -- the list of labels guessed by the random forest
-        true_labels {list} -- the list of the real labels
-    
-    Returns:
-        float -- the accuracy
-    """
-    score = 0
-    n = len(guessed_labels)
-    for i in range(n):
-        score += (int(guessed_labels[i]) == int(true_labels[i]))
-    score = score/n
-    return score
