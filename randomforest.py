@@ -13,8 +13,6 @@ import random as rd
 from math import sqrt
 from collections import defaultdict
 
-from sklearn.base import BaseEstimator, ClassifierMixin
-
 #######################
 #        Node
 #######################
@@ -87,156 +85,181 @@ class Node:
 #           OurDecisionTreeClassifier
 ###################################################
 
-class OurDecisionTreeClassifier(BaseEstimator, ClassifierMixin):
+class OurDecisionTreeClassifier():
     """A decision tree classifier.
     
     Arguments:
         n_cuts {int} -- the number of cuts tested to find the best cut
         max_depth {int} -- the maximal depth of a decision tree
-
+        
     Attributes:
         tree_ {Node} -- the root of the decision tree
-        n_samples_ {int} --
-        n_features_ {int} -- the number of features when `fit` is performed
-        features_ {list} -- the list of features (je sais pas encore si c nessaire)
+        n_features_ {int} -- the total number of features in the training set
+        features_ {list} -- the list of features randomly chosen when `fit` is performed
+        max_features_ {int} -- the number of features when `fit` is performed (attention <= nombre de features dans dataset)
     """
-    def __init__(self, n_cuts = 10, max_depth = 10):
+    def __init__(self, n_cuts = 40, max_depth = 20):
         self.n_cuts = n_cuts
         self.max_depth = max_depth
 
-    def fit(self, X, y, features):
-        """Build a decision tree classifier from the training set X.
+    def fit(self, node_train, features=None):
+        """Builds the decision tree from the training set (node_train).
         
         Arguments:
-            X {numpy_ndarray} -- The training input samples without labels
-            y {numpy_ndarray} -- The classes labels
-            features {list} -- The list of features
-
-        Returns:
-            OurDecisionTreeClassifier -- self, the fitted estimator
-        """
-        def _build(node, features, depth_max):
-            gain, c1, c2, question = bestCut(node, self.n_cuts, features)
+            node_train {Node} -- the node which contains the training set in dictionnary form
         
+        Keyword Arguments:
+            features {list} -- the list of features (default: {None})
+        
+        Returns:
+            OurDecisionTreeClassifier -- self
+        """
+        def decisionTree(node, n_cuts, features, max_depth):
+            """Builds the decision tree.
+            
+            Arguments:
+                node {Node} -- the root node
+                n_cuts {int} -- the number of cuts tested to find the best cut
+                features {list} -- the list of features
+                max_depth {int} -- the maximal depth of a decision tree
+            
+            Returns:
+                Node -- the root of the decision tree
+            """
+            gain, c1, c2, question = bestCut(node, n_cuts, features)
+            
             # There is no further information gain.
-            if(gini(node.data) == 0 or gain == 0 or node.depth() == depth_max):
+            if(gini(node.data) == 0 or gain == 0 or node.depth() == max_depth):
                 return node # Leaf
             
             # The best cut has been found. We can then partition the dataset.
             partition(node, c1, c2, question)
             
             # Recursively builds the tree.
-            _build(node.left_son, features, depth_max-1)
-            _build(node.right_son, features, depth_max-1)
+            decisionTree(node.left_son, n_cuts, features, max_depth-1)
+            decisionTree(node.right_son, n_cuts, features, max_depth-1)
+            return node # Decision node
 
-        self.n_samples_ = X.shape[0]
-        self.n_features_ = len(features)
-        self.features_ = features
-        
-        # Associate each data point in X to its label in y 
-        X_dict = defaultdict(list)
-        for k in range(X.shape[0]):
-            X_dict[y[k]].append(X[k])
+        self.n_features_ = len(list(node_train.data.values())[0][0])
+        self.max_features_ = int(sqrt(self.n_features_) + 1)
+
+        if(features == None):
+            self.features_ = rd.sample([i for i in range(self.n_features_)], self.max_features_)
+        else:
+            self.features_ = features
 
         # Build the tree
-        root = Node(X_dict)
-        _build(node=root, features=features, depth_max=self.max_depth)
-        self.tree_ = root
+        self.tree_ = decisionTree(node=node_train, n_cuts=self.n_cuts, features=self.features_, max_depth=self.max_depth)
 
         return self
 
-    def predict(self, X):
+    def predict(self, element):
         """Predict class for X.
     
         Arguments:
-            X {numpy-ndarray} -- the input to classify
+            element {numpy-ndarray} of shape (n_features,) -- the input to classify
         
         Returns:
-            int -- the predicted class
+            list of int -- the predicted classes
         """
+        
+        node = self.tree_
         exists_son = True
-        while(self.tree_ != None and self.tree_.question != None and exists_son):
-            if(X[self.tree_.question[0]] <= self.tree_.question[1]):
-                self.tree_ = self.tree_.left_son
+        while(node != None and node.question != None and exists_son):
+            if(element[node.question[0]] <= node.question[1]):
+                node = node.left_son
             else:
-                self.tree_ = self.tree_.right_son
-            if(self.tree_.left_son == None and self.tree_.right_son == None):
+                node = node.right_son
+            if(node.left_son == None and node.right_son == None):
                 exists_son = False
-        majoritary_index = np.argmax([len(points) for points in list(self.tree_.data.values())])
-        key = list(self.tree_.data.keys())[majoritary_index]
-        return int(key)
+        majoritary_index = np.argmax([len(points) for points in list(node.data.values())])
+        key = list(node.data.keys())[majoritary_index]
+        return key
+
+    def score(self, guessed_labels, true_labels):
+        """Computes the accuracy of the random forest.
+        
+        Arguments:
+            guessed_labels {list} -- the list of labels guessed by the decision tree
+            true_labels {list} -- the list of the real labels
+        
+        Returns:
+            float -- the accuracy
+        """
+        score = 0
+        n = len(guessed_labels)
+        for i in range(n):
+            score += (int(guessed_labels[i]) == int(true_labels[i]))
+        score = score/n
+        return score
 
 #####################
 #   Random Forest 
 #####################
 
-class OurRandomForestClassifier(BaseEstimator, ClassifierMixin):
+class OurRandomForestClassifier():
     """A random forest classifier.
     
     Arguments:
-        nb_trees --
+        n_trees {int} -- the number of trees in the forest
+        n_samples {int} -- the number of data points placed in a node before the node is split
+        n_cuts {int} -- the number of cuts tested to find the best cut
+        max_depth {int} -- the maximal depth of each tree
     
     Attributes:
-        base_estimator_ {OurDecisionTreeClassifier} -- The class used to create the list of trees.
-        trees_ {list of OurDecisionTreeClassifier} -- The collection of fitted sub-estimators.
-        classes_ {set} -- The classes labels.
-        n_classes_ {int} -- The number of classes.
-        n_features_ {int} -- The number of features when `fit` is performed.
-        score_ {float} -- Score of the training dataset (using out-of-bag estimate ??)
+        base_estimator_ {OurDecisionTreeClassifier} -- the class used to create the list of trees
+        trees_ {list of OurDecisionTreeClassifier} -- the collection of fitted sub-estimators
+        n_classes_ {int} -- the number of classes of the training set
     """
 
-    def __init__(self, n_trees = 100, n_samples = 100, n_cuts = 10, max_depth = 15):
+    def __init__(self, n_trees = 100, n_samples = 100, n_cuts = 20, max_depth = 20):
         self.n_trees = n_trees
         self.n_samples = n_samples
         self.n_cuts = n_cuts
         self.max_depth = max_depth
         self.base_estimator_ = OurDecisionTreeClassifier(n_cuts, max_depth)
 
-    def fit(self, X, y):
-        """Build a forest of trees from the training set (X, y).
+    def fit(self, data_train_dict):
+        """Build a forest of trees from the training set (data_train_dict).
         
         Arguments:
-            X {numpy_ndarray} -- The training input samples without labels
-            y {numpy_ndarray} -- The classes labels
+            data_train_dict {dict} -- the training input samples contained in a dictionary
         
         Returns:
             OurRandomForestClassifier -- self
         """
-        self.classes_ = set(y)
-        self.n_classes_ = len(self.classes_)
+        self.n_classes_ = len(data_train_dict.keys())
         self.trees_ = []
-        for _ in range(self.n_trees):
-        
-            # Random sampling of size n_samples in data
-            samples = rd.sample(list(X), self.n_samples)
+        for _ in range(1, self.n_trees + 1):
+            # Initialisation of the decision tree
+            dt = OurDecisionTreeClassifier(self.n_cuts, self.max_depth)
 
-            # Retrieve the labels associated with the data point in samples
-            samples_label = [y[k] for k in range(self.n_samples) if (samples[k].all() == X[k].all())]
-
+            # Random sampling of size sample_size in data
+            d = sampleDict(data_train_dict, self.n_samples)
+            root = Node(d)
+            
             # Random sampling of the features that will be used to build the tree 
-            self.n_features_ = X.shape[1]
-            tFeatures = rd.sample([i for i in range(self.n_features_)], int(sqrt(self.n_features_)) + 1)
-
-            # Build each tree
-            tree = self.base_estimator_.fit(X=np.array(samples), y=np.array(samples_label), features=tFeatures)
-            self.trees_.append(tree)
+            nb_features = len(list(data_train_dict.values())[0][0])
+            tFeatures = rd.sample([i for i in range(0,nb_features)], int(sqrt(nb_features)) + 1)
+            dt.fit(root, tFeatures)
+            self.trees_.append(dt)
 
         return self
 
     def predict(self, element):
-        """[summary]
+        """Predict class for element.
         
         Arguments:
-            element {numpy-ndarray} -- [description]
-        """
+            element {numpy-ndarray} of shape (n_features,) -- the input to classify
         
+        Returns:
+            list of int -- the predicted classes
+        """
         occ = [0] * (self.n_classes_ + 1)
         for tree in self.trees_:
             key = tree.predict(element)
             occ[key] += 1
-        closest = np.argmax(occ)
-        
-        return closest
+        return np.argmax(occ)
 
     def score(self, guessed_labels, true_labels):
         """Computes the accuracy of the random forest.
@@ -254,6 +277,7 @@ class OurRandomForestClassifier(BaseEstimator, ClassifierMixin):
             score += (int(guessed_labels[i]) == int(true_labels[i]))
         score = score/n
         return score
+    
 
 ##################
 # Methodes utiles
@@ -349,9 +373,9 @@ def bestCut(node, nb_cut, features):
             best_info = info
             best_c1, best_c2, best_feature, best_decisional_value = c1, c2, random_feature, decisional_value
             
-    best_question = (best_feature[0], best_decisional_value)
+    #best_question = (best_feature[0], best_decisional_value)
     
-    return best_info, best_c1, best_c2, best_question
+    return best_info, best_c1, best_c2, (best_feature[0], best_decisional_value)
 
 def partition(node, c1, c2, question):
     """Partitions the current dataset saved in the node in two datasets c1 and c2 and updates the question of the node.
