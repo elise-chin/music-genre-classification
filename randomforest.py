@@ -277,7 +277,43 @@ class OurRandomForestClassifier():
             score += (int(guessed_labels[i]) == int(true_labels[i]))
         score = score/n
         return score
-    
+
+    def findFeatureImportance(self, X, y):
+        """Calculate feature importances according to 
+        Arguments:
+            X {numpy-ndarray} of shape (n_samples, n_features) -- the training dataset without labels
+            y {numpy-ndarray} of shape (n_samples,) -- the labels of the training dataset
+        Returns:
+        """
+
+        n_samples, n_features = X.shape[0], X.shape[1]
+        feat_imp = {}
+
+        # Make predictions
+        predictions_without_shuffle = [self.predict(X[i,:]) for i in range(n_samples)]
+
+        # Compute the error value with all columns in place without shuffling
+        base = self.score(predictions_without_shuffle, y)
+
+        # Loop through each column 
+        for ind in range(n_features):
+            #print("ind = ", ind)
+            X_new = X.copy()
+
+            # Shuffle the column
+            np.random.shuffle(X_new[:, ind])
+
+            # Make predictions again
+            predictions_with_shuffle = [self.predict(X_new[i,:]) for i in range(n_samples)]
+
+            # Compute change in error term as compared to predictions_without_shuffle
+            # Greater change means more importance 
+            feat_imp[ind] = abs(self.score(predictions_with_shuffle, y) - base)
+
+            del X_new
+
+        features, importances = zip(*feat_imp.items())
+        return features, importances
 
 ##################
 # Methodes utiles
@@ -392,7 +428,9 @@ def partition(node, c1, c2, question):
     node.right_son = Node(c2)
     node.right_son.father = node
 
-# Sur les dictionnaires
+########################
+# Pour les dictionnaires
+########################
 def lenDictValues(dic):
     """Computes the total number of data in a dataset represented by a dictionary. Each value is a list.
     
@@ -426,3 +464,20 @@ def sampleDict(dic, sample_size):
             else:
                 i -= len(v)
     return d
+
+####################
+# Feature Selection
+####################
+
+def transform(X, selected_features_indexes):
+    """Reduce X to the selected features.
+    
+    Arguments:
+        X {numpy-ndarray} of shape (n_samples, n_features) -- the input samples
+        selected_features_indexes {list} -- the indexes of the selected features
+    
+    Returns:
+        numpy-ndarray -- the input samples with only the selected features
+    """
+    X_r = np.array([X[:,i] for i in selected_features_indexes])
+    return np.transpose(X_r)
