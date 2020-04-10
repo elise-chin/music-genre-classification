@@ -104,6 +104,34 @@ class OurDecisionTreeClassifier():
         self.n_cuts = n_cuts
         self.max_depth = max_depth
 
+    def get_params(self):
+        """Get the parameters of the decision tree.
+        
+        Returns:
+            dict -- estimator parameters
+        """
+        params = {
+            'n_cuts': self.n_cuts,
+            'max_depth': self.max_depth,
+        }
+        return params
+
+    def set_params(self, params):
+        """Set the parameters of the decision tree.
+        
+        Arguments:
+            params {dict} -- estimator parameters
+        
+        Returns:
+            self -- estimator instance
+        """
+        valid_params = self.get_params().keys()
+        for key in params.keys():
+            if key not in valid_params:
+                raise ValueError("Invalid parameter %s for estimator %s."%(key, self.__class__))
+            setattr(self, key, params[key])
+        return self
+
     def fit(self, node_train, features=None):
         """Builds the decision tree from the training set (node_train).
         
@@ -220,6 +248,37 @@ class OurRandomForestClassifier():
         self.n_cuts = n_cuts
         self.max_depth = max_depth
         self.base_estimator_ = OurDecisionTreeClassifier(n_cuts, max_depth)
+
+    def get_params(self):
+        """Get the parameters of the random forest.
+        
+        Returns:
+            dict -- the parameters
+        """
+        params = {
+            'n_trees': self.n_trees,
+            'n_samples': self.n_samples,
+            'n_cuts': self.n_cuts,
+            'max_depth': self.max_depth,
+        }
+        return params
+
+    def set_params(self, params):
+        """Set the parameters of the random forest.
+        
+        Arguments:
+            params {dict} -- estimator parameters
+        
+        Returns:
+            self -- estimator instance
+        """
+        valid_params = self.get_params().keys()
+        for key in params.keys():
+            if key not in valid_params:
+                raise ValueError("Invalid parameter %s for estimator %s."%(key, self.__class__))
+            setattr(self, key, params[key])
+        return self
+
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
