@@ -20,11 +20,13 @@ from collections import defaultdict
 class Node:
     """Represents a node of a decision tree.
 
+    Argument:
+        data {dict} -- the key represents a label, the values a list of data each represented by a vector
+        
     Attributes:
         father {Node} -- the parent node
         left_son {Node} -- the left child node
         right_son {Node} -- the right child node
-        data {dict} -- the key represents a label, the values a list of data each represented by a vector
         question {tuple} -- (chosenFeature, decisional_value) which records the best question to ask at this node of the tree. The question is "chosenFeature <= decisional_value ?"
     """
     def __init__(self, data):
@@ -219,28 +221,36 @@ class OurRandomForestClassifier():
         self.max_depth = max_depth
         self.base_estimator_ = OurDecisionTreeClassifier(n_cuts, max_depth)
 
-    def fit(self, data_train_dict):
-        """Build a forest of trees from the training set (data_train_dict).
+    def fit(self, X, y):
+        """Build a forest of trees from the training set (X, y).
         
         Arguments:
-            data_train_dict {dict} -- the training input samples contained in a dictionary
+            X {numpy_ndarray} of shape (n_samples, n_features) -- The training input samples without labels
+            y {numpy_ndarray} of shape (n_samples,) -- The classes labels
         
         Returns:
             OurRandomForestClassifier -- self
         """
-        self.n_classes_ = len(data_train_dict.keys())
+        # Transform the training set into a dictionary
+        X_dict = defaultdict(list)
+        for i in range(X.shape[0]):
+            X_dict[y[i]].append(X[i,:])
+
+        self.n_classes_ = len(X_dict.keys())
         self.trees_ = []
-        for _ in range(1, self.n_trees + 1):
+        n_features = X.shape[1]
+
+        # Loop through each tree
+        for _ in range(self.n_trees):
             # Initialisation of the decision tree
             dt = OurDecisionTreeClassifier(self.n_cuts, self.max_depth)
 
             # Random sampling of size sample_size in data
-            d = sampleDict(data_train_dict, self.n_samples)
+            d = sampleDict(X_dict, self.n_samples)
             root = Node(d)
             
-            # Random sampling of the features that will be used to build the tree 
-            nb_features = len(list(data_train_dict.values())[0][0])
-            tFeatures = rd.sample([i for i in range(0,nb_features)], int(sqrt(nb_features)) + 1)
+            # Random sampling of the features that will be used to build the tree
+            tFeatures = rd.sample([i for i in range(n_features)], int(sqrt(n_features)) + 1)
             dt.fit(root, tFeatures)
             self.trees_.append(dt)
 
