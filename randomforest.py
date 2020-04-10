@@ -99,6 +99,7 @@ class OurDecisionTreeClassifier():
         tree_ {Node} -- the root of the decision tree
         n_features_ {int} -- the total number of features in the training set
         features_ {list} -- the list of features randomly chosen when `fit` is performed
+        score_ {float} -- the test set accuracy
     """
     def __init__(self, n_cuts = 40, max_depth = 20, max_features = "sqrt"):
         self.n_cuts = n_cuts
@@ -292,6 +293,7 @@ class OurRandomForestClassifier():
         base_estimator_ {OurDecisionTreeClassifier} -- the class used to create the list of trees
         trees_ {list of OurDecisionTreeClassifier} -- the collection of fitted sub-estimators
         n_classes_ {int} -- the number of classes of the training set
+        score_ {float} -- the test set accuracy
     """
 
     def __init__(self, n_trees = 100, n_samples = 100, n_cuts = 20, max_depth = 20, max_features = "sqrt"):
@@ -373,7 +375,7 @@ class OurRandomForestClassifier():
         return self
 
     def predict(self, X):
-        """Predict class for element.
+        """Predict class for X.
         
         Arguments:
             X {numpy-ndarray} of shape (n_samples, n_features) -- the input to classify
