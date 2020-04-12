@@ -4,9 +4,10 @@ Ce module contient toutes les classes et fonctions permettant d'optimiser les hy
 """
 import numpy as np
 import random as rd
-import randomforest as rf
 
 from sklearn.model_selection import ParameterGrid
+
+from modules.scoring import accuracy_score
 
 class RandomizedSearchCV():
     """Randomized search on hyper parameters.
@@ -214,7 +215,7 @@ def kFoldCV(estimator, X, y, k):
         predictions = estimator.predict(np.array(test_subset))
 
         # Save the score
-        scores.append(estimator.score(predictions, test_labels_subset)*100)
+        scores.append(accuracy_score(predictions, test_labels_subset))
 
     return np.mean(scores)
 
