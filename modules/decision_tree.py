@@ -137,7 +137,7 @@ class OurDecisionTreeClassifier():
         return self
 
     def fit(self, X, y):
-        """Builds the decision tree from the training set (node_train).
+        """Builds the decision tree from the training set (X, y).
         
         Arguments:
             X {numpy_ndarray} of shape (n_samples, n_features) -- the training input samples without labels
