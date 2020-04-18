@@ -87,32 +87,24 @@ class OurNaiveBayesClassifier():
         feat_imp = {}
 
         # Make predictions
-        y = dataset['genre/label'].to_list()
+        #y = dataset['genre/label'].to_list()
+        y = dataset['genre/label'].values
         
         dataset = dataset.drop(columns=['genre/label'])
-        n_features = len(dataset.columns)
+        #n_features = len(dataset.columns)
         predictions_without_shuffle = self.predict(dataset)
 
         # Compute the error value with all columns in place without shuffling
         base = self.score(predictions_without_shuffle, y)
 
         # Loop through each column
-        for ind in range(n_features): #pb lors de la derniere iteration
-            if ind>=1: break;
-            print("ind = ", ind)
+        for ind, col in enumerate(dataset.columns):
+            #print("ind =", ind)
             dataset_new = dataset.copy()
-            print(dataset_new.head(10))
 
-            # Shuffle the column JE N'ARRIVE PAS A SHUFFLE UNE COLONNE
-            #np.random.shuffle(X_new[:, ind])
-            dataset_new.reset_index(drop=True, inplace=True) 
-            
-            dataset_shuffle = dataset_new.sample(frac=1)
-            serie = dataset_shuffle.iloc[:,ind]
-            
-            dataset_new.update(serie)
-            
-            print(dataset_new.head(10))
+            # Shuffle the column
+            dataset_new[col] = np.random.permutation(dataset_new[col].values)
+
             # Make predictions again
             predictions_with_shuffle = self.predict(dataset_new)
 
