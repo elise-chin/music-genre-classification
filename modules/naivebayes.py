@@ -10,15 +10,30 @@ from math import exp
 from math import log
 
 class OurNaiveBayesClassifier():
-    
+    """A Gaussian Naive Bayes classifier.
+
+    Attributes:
+        probaClass {list} -- a list of probalities associated with each class
+        meanDf {DataFrame} -- the mean associated with each feature
+        sdDf {DataFrame} -- the standard derivation associated with each feature
+    """
+
     def __init__(self):
         self.probaClass = None
         self.meanDf = None
         self.sdDf = None
-    
+
     def fit(self, train_set):
+        """Builds the classifier from the training set.
+
+        Arguments:
+            train_set {DataFrame} of shape (n_samples, n_features+1) -- the training input samples with labels
+
+        Returns:
+            OurNaivesBayesClassifier -- self
+        """
         train_set_by_classes = train_set.groupby('genre/label')
-        
+
         framesMean = []
         framesSd = []
         probaClass = np.empty([1, len(train_set_by_classes)])
@@ -30,25 +45,33 @@ class OurNaiveBayesClassifier():
             sdFeaturesClass = pd.DataFrame(group.std(axis = 0)).rename(columns={0:i})
             framesMean.append(meanFeaturesClass)
             framesSd.append(sdFeaturesClass)
-            
+
         meanDf = pd.concat(framesMean, axis=1, join='inner')
         sdDf = pd.concat(framesSd, axis=1, join='inner')
-        
+
         meanDf = meanDf.transpose().drop(axis=1, labels='genre/label')
         sdDf = sdDf.transpose().drop(axis=1, labels='genre/label')
-        
+
         self.probaClass = probaClass
         self.meanDf = meanDf
         self.sdDf = sdDf
         return self
 
     def predict(self, dataset):
-        
+        """Predict class for input dataset.
+
+        Arguments:
+            dataset {DataFrame} of shape (n_samples, n_features) -- the test input to classify without labels
+
+        Returns:
+            list -- the predicted classes
+        """
+
         # Calculate the Gaussian probability distribution function for x
         def calculate_proba_Norm(x, mean, stdev):
         	exponent = exp(-((x-mean)**2 / (2 * stdev**2 )))
         	return (1 / (sqrt(2 * pi) * stdev)) * exponent
-        
+
         def calculateProbabilityClass(label, indexClass, probaClass, meanDf, sdDf):
             value = float(0)
             valExp = exp(1)
@@ -56,42 +79,32 @@ class OurNaiveBayesClassifier():
                 value += log(calculate_proba_Norm(label[i], meanDf.iat[indexClass, i], sdDf.iat[indexClass, i]) + 1, valExp) #on rajoute un pour eviter d'avoir une proba tres faible
             value +=  log(probaClass[0,indexClass], valExp)
             return value
-        
+
         predictions = []
         for index, row in dataset.iterrows():
             li = [calculateProbabilityClass(row, i, self.probaClass, self.meanDf, self.sdDf) for i in range(len(self.meanDf))]
             predictions.append(np.argmax(np.asarray(li)))
-            
+
         return predictions
 
     def score(self, guessed_labels, true_labels):
+        #calculate the score of the prediction
         score = 0
         n = len(guessed_labels)
         for i in range(n):
             score += (int(guessed_labels[i]) == int(true_labels[i]))
         score = score/n
-        
+
         return score
-    
+
     def findFeatureImportance(self, dataset):
-        """Calculate feature importances according to score function of OurDecisionTreeClassifier.
-
-        Arguments:
-            X {numpy-ndarray} of shape (n_samples, n_features) -- the training dataset without labels
-            y {numpy-ndarray} of shape (n_samples,) -- the labels of the training dataset
-
-        Returns:
-            tuple of list -- the features associated with their importance
-        """
 
         feat_imp = {}
 
         # Make predictions
-        #y = dataset['genre/label'].to_list()
         y = dataset['genre/label'].values
-        
+
         dataset = dataset.drop(columns=['genre/label'])
-        #n_features = len(dataset.columns)
         predictions_without_shuffle = self.predict(dataset)
 
         # Compute the error value with all columns in place without shuffling
@@ -109,11 +122,10 @@ class OurNaiveBayesClassifier():
             predictions_with_shuffle = self.predict(dataset_new)
 
             # Compute change in error term as compared to predictions_without_shuffle
-            # Greater change means more importance 
+            # Greater change means more importance
             feat_imp[ind] = abs(self.score(predictions_with_shuffle, y) - base)
 
             del dataset_new
 
         features, importances = zip(*feat_imp.items())
         return features, importances
-
